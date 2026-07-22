@@ -5,7 +5,7 @@ set -euo pipefail
 ROLE_FILE="/etc/bastion/user-role.conf"
 
 usage() {
-    cat <<EOF
+cat <<EOF
 Usage:
   $0 <username> <role> <publickey>
 
@@ -13,8 +13,11 @@ Roles:
   qc2
   Vtt70
   Vtt80
+
+Example:
+  $0 tommy Vtt70 "AAAAC3NzaC1lZDI1NTE5AAAA..."
 EOF
-    exit 1
+exit 1
 }
 
 [[ $# -eq 3 ]] || usage
@@ -35,7 +38,7 @@ fi
 # Role Check
 #
 case "$ROLE" in
-    qc2|Vtt80|Vtt70)
+    qc2|Vtt70|Vtt80)
         ;;
     *)
         echo "Invalid role"
@@ -44,54 +47,103 @@ case "$ROLE" in
 esac
 
 #
-# Required Group
+# Required Groups
 #
-getent group mfa_pending >/dev/null || groupadd mfa_pending
+for grp in mfa_pending "$ROLE"; do
+    getent group "$grp" >/dev/null || groupadd "$grp"
+done
+
+mkdir -p /etc/bastion
+touch "$ROLE_FILE"
 
 #
 # Create User
 #
-echo "[+] Creating user: $USER"
+echo "[+] Creating user: $USERNAME"
 
-if ! id "$USER" >/dev/null 2>&1; then
+if ! id "$USERNAME" >/dev/null 2>&1; then
+
     adduser \
         --disabled-password \
         --gecos "" \
-        "$USER"
+        "$USERNAME"
+
+    echo "[+] User created"
+
+else
+    echo "[*] User already exists"
 fi
 
-# 防呆，確保帳號沒有可用密碼
-passwd -l "$USER" >/dev/null 2>&1 || true
+#
+# Add MFA onboarding group
+#
+if ! id -nG "$USERNAME" | grep -qw mfa_pending; then
+    usermod -aG mfa_pending "$USERNAME"
+fi
 
 #
-# SSH
+# Lock password
 #
-install -d -m 700 \
+passwd -l "$USERNAME" >/dev/null 2>&1 || true
+
+echo "[+] Added to group: mfa_pending"
+
+#
+# SSH directory
+#
+HOME_DIR="/home/$USERNAME"
+SSH_DIR="$HOME_DIR/.ssh"
+
+install -d \
+    -m 700 \
     -o "$USERNAME" \
     -g "$USERNAME" \
-    "/home/$USERNAME/.ssh"
+    "$SSH_DIR"
 
-cat > "/home/$USERNAME/.ssh/authorized_keys" <<EOF
+#
+# Enrollment key
+#
+cat > "$SSH_DIR/authorized_keys" <<EOF
 command="/usr/local/bin/mfa-enroll-wrapper.sh",no-agent-forwarding,no-port-forwarding,no-X11-forwarding $PUBKEY
 EOF
 
-chmod 600 "/home/$USERNAME/.ssh/authorized_keys"
-chown "$USERNAME:$USERNAME" "/home/$USERNAME/.ssh/authorized_keys"
+chmod 600 "$SSH_DIR/authorized_keys"
+
+chown \
+    "$USERNAME:$USERNAME" \
+    "$SSH_DIR/authorized_keys"
 
 #
-# Save Final Role
+# Save final role
 #
-grep -v "^${USERNAME}:" "$ROLE_FILE" 2>/dev/null > /tmp/user-role.$$
+grep -v "^${USERNAME}:" "$ROLE_FILE" > /tmp/user-role.$$
 mv /tmp/user-role.$$ "$ROLE_FILE"
 
 echo "${USERNAME}:${ROLE}" >> "$ROLE_FILE"
 
+#
+# Audit
+#
 logger -t bastion-audit \
-    "USER_CREATED user=$USERNAME role=$ROLE"
+"USER_CREATED user=$USERNAME role=$ROLE"
 
+logger -t bastion-audit \
+"USER_ADDED_TO_MFA_PENDING user=$USERNAME role=$ROLE"
+
+#
+# Summary
+#
 echo
 echo "====================================="
 echo " User : $USERNAME"
 echo " Role : $ROLE"
 echo " State: MFA Pending"
 echo "====================================="
+echo
+echo "Next Steps:"
+echo "1. User login with SSH key"
+echo "2. Scan Google Authenticator QR Code"
+echo "3. MFA completed"
+echo "4. Auto add role: $ROLE"
+echo "5. Auto remove: mfa_pending"
+echo
