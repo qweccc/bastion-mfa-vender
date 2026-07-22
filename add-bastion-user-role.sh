@@ -104,7 +104,7 @@ install -d \
 # Enrollment key
 #
 cat > "$SSH_DIR/authorized_keys" <<EOF
-command="/usr/local/bin/mfa-enroll-wrapper.sh",no-agent-forwarding,no-port-forwarding,no-X11-forwarding $PUBKEY
+command="/usr/local/bin/mfa-enroll-wrapper.sh",no-agent-forwarding,no-port-forwarding,no-X11-forwarding ssh-ed25519 $PUBKEY
 EOF
 
 chmod 600 "$SSH_DIR/authorized_keys"
