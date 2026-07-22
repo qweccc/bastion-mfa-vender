@@ -35,7 +35,7 @@ fi
 # Role Check
 #
 case "$ROLE" in
-    internal|vendor_a|vendor_b|Vtt70)
+    qc2|Vtt80|Vtt70)
         ;;
     *)
         echo "Invalid role"
@@ -51,18 +51,17 @@ getent group mfa_pending >/dev/null || groupadd mfa_pending
 #
 # Create User
 #
-if id "$USERNAME" >/dev/null 2>&1; then
-    echo "User already exists"
-    exit 1
+echo "[+] Creating user: $USER"
+
+if ! id "$USER" >/dev/null 2>&1; then
+    adduser \
+        --disabled-password \
+        --gecos "" \
+        "$USER"
 fi
 
-useradd \
-    -m \
-    -s /bin/bash \
-    -G mfa_pending \
-    "$USERNAME"
-
-passwd -l "$USERNAME"
+# 防呆，確保帳號沒有可用密碼
+passwd -l "$USER" >/dev/null 2>&1 || true
 
 #
 # SSH
