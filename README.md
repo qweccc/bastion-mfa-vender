@@ -37,7 +37,7 @@ sudo systemctl reload ssh
 addgroup
 deluser
 getent group
-
+sudo userdel -r vtest
 sudo usermod -rG Vtt70 vtest 移除群組
 sudo usermod -aG Vtt70 vtest 加入群組
 sudo journalctl -f
