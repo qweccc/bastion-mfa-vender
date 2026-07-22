@@ -19,3 +19,13 @@ Key + OTP
 ↓
 套用最終權限
 
+
+add-bastion-user.sh
+clenaok.sh
+mfaok.sh
+/usr/local/bin/mfa-enroll-wrapper.sh
+/etc/bastion/user-role.conf
+/usr/local/sbin/
+mfa-cleanup.sh
+mfa-complete.sh
+tunnel-only
