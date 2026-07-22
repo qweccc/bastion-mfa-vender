@@ -10,10 +10,9 @@ Usage:
   $0 <username> <role> <publickey>
 
 Roles:
-  internal
-  vendor_a
-  vendor_b
+  qc2
   Vtt70
+  Vtt80
 EOF
     exit 1
 }
