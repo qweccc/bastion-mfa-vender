@@ -29,3 +29,18 @@ mfaok.sh
 mfa-cleanup.sh
 mfa-complete.sh
 tunnel-only
+
+
+---常用指令
+sudo sshd -t
+sudo systemctl reload ssh
+addgroup
+deluser
+getent group
+
+sudo usermod -rG Vtt70 vtest 移除群組
+sudo usermod -aG Vtt70 vtest 加入群組
+sudo journalctl -f
+sudo journalctl -t bastion-audit
+sudo journalctl -t ssh
+sudo journalctl -t sudo
