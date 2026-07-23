@@ -38,6 +38,7 @@ addgroup
 deluser
 getent group
 sudo userdel -r vtest
+sudo kill -9 1579916
 sudo usermod -rG Vtt70 vtest 移除群組
 sudo usermod -aG Vtt70 vtest 加入群組
 sudo journalctl -f
