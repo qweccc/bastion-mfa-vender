@@ -45,3 +45,7 @@ sudo journalctl -f
 sudo journalctl -t bastion-audit
 sudo journalctl -t ssh
 sudo journalctl -t sudo
+
+
+---bastion路由
+sudo ip route add 192.168.70.0/24 via 192.168.50.9
